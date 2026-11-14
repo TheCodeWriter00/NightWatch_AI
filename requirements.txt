@@ -1,8 +1,0 @@
-streamlit
-pandas
-numpy==2.4.6
-matplotlib
-plotly
-scikit-learn==1.6.1
-xgboost==3.4.1
-joblib==1.6.0
