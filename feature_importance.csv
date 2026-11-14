@@ -1,0 +1,16 @@
+Feature,Importance
+remainder__previous_night_temp,0.8070543395161128
+remainder__daytime_avg_temp,0.15167673767997475
+city__city_Al Ain,0.006564610582267325
+remainder__previous_3_night_avg,0.005486750481202164
+remainder__daytime_avg_humidity,0.0054484647265226685
+remainder__day_of_year,0.004895949810788249
+remainder__daytime_avg_wind,0.004885654513680297
+remainder__daytime_avg_cloud,0.004070941030751209
+remainder__daytime_max_temp,0.003901251059926362
+remainder__two_nights_ago_temp,0.0034136847131061307
+city__city_Abu Dhabi,0.0012072368483060716
+city__city_Ras Al Khaimah,0.0006330754919869637
+remainder__month,0.00045347689832247036
+city__city_Sharjah,0.00015850499180100982
+city__city_Dubai,0.000149321655251556
