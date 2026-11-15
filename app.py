@@ -108,7 +108,7 @@ def fetch_weather(city):
         "wind_speed_unit": "kmh",
         "timezone": "Asia/Dubai",
         "past_days": 4,
-        "forecast_days": 1
+        "forecast_days": 3
     }
 
     response = requests.get(
