@@ -182,35 +182,24 @@ def calculate_daytime_features(weather, target_date):
 # -----------------------------------------
 
 def calculate_night_average(weather, night_date):
+    night_date = pd.to_datetime(night_date).date()
 
-    start = pd.Timestamp(
-        datetime.combine(night_date, datetime.min.time())
-    ) + pd.Timedelta(hours=21)
+    times = pd.to_datetime(weather["time"])
+    hours = times.dt.hour
 
-    end = pd.Timestamp(
-        datetime.combine(
-            night_date + timedelta(days=1),
-            datetime.min.time()
-        )
-    ) + pd.Timedelta(hours=5)
+    start = pd.Timestamp(night_date) + pd.Timedelta(hours=21)
+    end = start + pd.Timedelta(hours=8)
 
-    night = weather[
-        (weather["time"] >= start) &
-        (weather["time"] <= end)
-    ].copy()
+    mask = (times >= start) & (times <= end)
+    night_temps = weather.loc[mask, "temperature_2m"].dropna()
 
-    if len(night) != 9:
+    if len(night_temps) != 9:
         raise ValueError(
-            f"Could not retrieve all 9 nighttime observations "
-            f"for {night_date}."
+            f"Expected 9 nighttime observations for {night_date}, "
+            f"but received {len(night_temps)}"
         )
 
-    if night["temperature_2m"].isna().any():
-        raise ValueError(
-            f"Nighttime temperature data is incomplete for {night_date}."
-        )
-
-    return night["temperature_2m"].mean()
+    return float(night_temps.mean())
 
 
 # -----------------------------------------
