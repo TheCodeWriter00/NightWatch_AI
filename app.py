@@ -351,145 +351,99 @@ st.info(
     "| UAE local time"
 )
 
+
 if st.button(
     "🌙 Fetch Weather & Predict",
     use_container_width=True
 ):
 
     try:
+        with st.spinner("Fetching weather data and generating 3-night predictions..."):
 
-        with st.spinner(
-            "Fetching weather data and preparing model inputs..."
-        ):
+            weather = fetch_weather(selected_prediction_city)
 
-            weather = fetch_weather(
-                selected_prediction_city
-            )
-
-            features = prepare_prediction_features(
-                weather,
-                selected_prediction_city,
-                today
-            )
-
-            input_data = pd.DataFrame([features])
-
-            # Preserve exact training feature order
-            input_data = input_data[
-                metadata["input_features"]
+            predictions = []
+            previous_values = [
+                calculate_night_average(weather, today - timedelta(days=1)),
+                calculate_night_average(weather, today - timedelta(days=2)),
+                calculate_night_average(weather, today - timedelta(days=3))
             ]
 
-            prediction = float(
-                model.predict(input_data)[0]
-            )
+            for day_offset in range(3):
 
-        st.success(
-            "Weather data retrieved and prediction generated!"
-        )
+                prediction_date = today + timedelta(days=day_offset)
 
-        st.metric(
-            "Predicted Nighttime Average Temperature",
-            f"{prediction:.2f} °C"
-        )
+                features = prepare_prediction_features(
+                    weather,
+                    selected_prediction_city,
+                    prediction_date,
+                    previous_values
+                )
 
-        # ---------------------------------
-        # DISPLAY AUTOMATICALLY FETCHED INPUTS
-        # ---------------------------------
+                input_data = pd.DataFrame([features])
+                input_data = input_data[metadata["input_features"]]
 
-        with st.expander(
-            "View automatically retrieved weather inputs"
-        ):
+                prediction = float(model.predict(input_data)[0])
 
-            st.write(
-                "Daytime weather (06:00–18:00)"
-            )
+                predictions.append({
+                    "date": prediction_date,
+                    "temperature": prediction,
+                    "features": features
+                })
 
-            col1, col2 = st.columns(2)
+                previous_values = [
+                    prediction,
+                    previous_values[0],
+                    previous_values[1]
+                ]
 
-            col1.metric(
-                "Average temperature",
-                f"{features['daytime_avg_temp']:.2f} °C"
-            )
+        st.success("Three-night forecast generated!")
 
-            col2.metric(
-                "Maximum temperature",
-                f"{features['daytime_max_temp']:.2f} °C"
-            )
+        st.subheader("🌙 Predicted Nighttime Temperatures")
 
-            col1.metric(
-                "Average humidity",
-                f"{features['daytime_avg_humidity']:.2f}%"
-            )
-
-            col2.metric(
-                "Average wind speed",
-                f"{features['daytime_avg_wind']:.2f} km/h"
-            )
-
-            col1.metric(
-                "Average cloud cover",
-                f"{features['daytime_avg_cloud']:.2f}%"
-            )
-
-            st.write(
-                "Previous nighttime temperatures (21:00–05:00)"
-            )
-
-            col1, col2 = st.columns(2)
-
-            col1.metric(
-                "Previous night",
-                f"{features['previous_night_temp']:.2f} °C"
-            )
-
-            col2.metric(
-                "Two nights ago",
-                f"{features['two_nights_ago_temp']:.2f} °C"
-            )
-
+        for item in predictions:
             st.metric(
-                "Previous 3-night average",
-                f"{features['previous_3_night_avg']:.2f} °C"
+                item["date"].strftime("%d %B %Y"),
+                f"{item['temperature']:.2f} °C"
             )
+
+        with st.expander("View weather inputs for tonight"):
+            features = predictions[0]["features"]
+
+            for label, key, unit in [
+                ("Average daytime temperature", "daytime_avg_temp", "°C"),
+                ("Maximum daytime temperature", "daytime_max_temp", "°C"),
+                ("Average humidity", "daytime_avg_humidity", "%"),
+                ("Average wind speed", "daytime_avg_wind", "km/h"),
+                ("Average cloud cover", "daytime_avg_cloud", "%"),
+                ("Previous night", "previous_night_temp", "°C"),
+                ("Two nights ago", "two_nights_ago_temp", "°C"),
+                ("Previous 3-night average", "previous_3_night_avg", "°C")
+            ]:
+                st.write(f"**{label}:** {features[key]:.2f} {unit}")
 
         st.caption(
             "Weather inputs are retrieved from Open-Meteo. "
-            "The provider's weather-model data is not guaranteed "
-            "to represent direct weather-station observations."
+            "Future-night predictions use earlier model predictions "
+            "as lag features and are therefore experimental."
         )
 
         st.info(
-            "This is a machine-learning prediction, not a confirmed "
-            "weather observation. A warm anomaly can only be confirmed "
-            "after the actual nighttime temperature is observed and "
-            "compared with the prediction."
+            "These are machine-learning predictions, not confirmed "
+            "weather observations. Actual nighttime temperatures "
+            "may differ."
         )
 
     except requests.RequestException as error:
-
-        st.error(
-            "Unable to retrieve weather data. "
-            "Please check your connection and try again."
-        )
-
+        st.error("Unable to retrieve weather data.")
         st.caption(str(error))
 
     except (ValueError, KeyError) as error:
-
-        st.error(
-            "The prediction could not be generated because "
-            "some required weather data is unavailable."
-        )
-
+        st.error("Required weather data is unavailable.")
         st.caption(str(error))
 
     except Exception as error:
-
-        st.error(
-            "An unexpected error occurred while generating "
-            "the prediction."
-        )
-
+        st.error("An unexpected prediction error occurred.")
         st.caption(str(error))
 
 
