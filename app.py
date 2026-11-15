@@ -206,26 +206,34 @@ def calculate_night_average(weather, night_date):
 # BUILD ALL MODEL INPUT FEATURES
 # -----------------------------------------
 
-def prepare_prediction_features(weather, city, target_date):
+
+def prepare_prediction_features(
+    weather, city, target_date, previous_night_values=None
+):
 
     daytime = calculate_daytime_features(
         weather,
         target_date
     )
 
-    previous_night = calculate_night_average(
-        weather,
-        target_date - timedelta(days=1)
-    )
+    if previous_night_values is None:
+        previous_night_values = [
+            calculate_night_average(
+                weather,
+                target_date - timedelta(days=1)
+            ),
+            calculate_night_average(
+                weather,
+                target_date - timedelta(days=2)
+            ),
+            calculate_night_average(
+                weather,
+                target_date - timedelta(days=3)
+            )
+        ]
 
-    two_nights_ago = calculate_night_average(
-        weather,
-        target_date - timedelta(days=2)
-    )
-
-    three_nights_ago = calculate_night_average(
-        weather,
-        target_date - timedelta(days=3)
+    previous_night, two_nights_ago, three_nights_ago = (
+        previous_night_values
     )
 
     previous_three_night_avg = np.mean([
@@ -249,6 +257,7 @@ def prepare_prediction_features(weather, city, target_date):
     }
 
     return features
+
 
 
 # -----------------------------------------
